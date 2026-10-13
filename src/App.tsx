@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ensureSeeded, useSessions, useSettings } from './db';
+import { ensureSeeded, useOnboarding, useSessions, useSettings } from './db';
 import { RestTimerProvider } from './components/RestTimer';
 import { Icon } from './components/ui';
 import { go, useRoute } from './lib/router';
@@ -11,6 +11,7 @@ import { History } from './screens/History';
 import { Progress } from './screens/Progress';
 import { Settings } from './screens/Settings';
 import { ProgramEditor } from './screens/ProgramEditor';
+import { Onboarding } from './screens/Onboarding';
 
 const tabs = [
   { key: '', label: 'היום', icon: 'today' },
@@ -22,6 +23,7 @@ const tabs = [
 export function App() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const onboarding = useOnboarding(ready);
   const route = useRoute();
   const settings = useSettings();
   const sessions = useSessions();
@@ -37,9 +39,18 @@ export function App() {
   }, []);
 
   if (error) return <p className="empty">לא הצלחתי לפתוח את מסד הנתונים במכשיר: {error}</p>;
-  if (!ready || !settings) return null;
+  if (!ready || !settings || !onboarding) return null;
 
   const [section = '', a, b] = route;
+
+  // The questionnaire takes the whole screen: on a new device, or when rebuilding from Settings.
+  if (onboarding === 'pending' || section === 'onboarding') {
+    return (
+      <main className="app app-full">
+        <Onboarding key={onboarding} mode={onboarding === 'pending' ? 'first' : 'redo'} />
+      </main>
+    );
+  }
   const activeId = sessions?.find((s) => s.status === 'active')?.id;
 
   let screen;

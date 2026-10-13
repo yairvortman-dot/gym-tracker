@@ -33,6 +33,8 @@ export async function ensureSeeded() {
       { key: 'program', value: defaultProgram },
       { key: 'settings', value: defaultSettings },
       { key: 'seeded', value: true },
+      // A new device starts with the questionnaire. Devices set up before it existed never see it.
+      { key: 'onboarding', value: 'pending' },
     ]);
   });
 }
@@ -55,6 +57,14 @@ export function useSettings(): Settings | undefined {
 
 export function useSessions(): SessionLog[] | undefined {
   return useLiveQuery(() => db.sessions.orderBy('startedAt').reverse().toArray());
+}
+
+/**
+ * 'pending' | 'done'. Missing (devices set up before the questionnaire existed) counts as done.
+ * Reads only once first-run setup is finished, so a new device never flashes the home screen.
+ */
+export function useOnboarding(ready: boolean): string | undefined {
+  return useLiveQuery(async () => (ready ? ((await getMeta<string>('onboarding')) ?? 'done') : undefined), [ready]);
 }
 
 export function useMeta<T>(key: string): T | undefined {

@@ -267,6 +267,8 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
     if (a.experience === 'lt6m') sc -= meta.tech === 3 ? 4 : meta.tech === 2 ? 1 : 0;
     // Strength goals with experience: barbell main lifts first.
     if (a.goal === 'strength' && !isNew(a) && slot.pri === 1 && meta.role === 'compound') sc += meta.needs.includes('bb') ? 3 : meta.light ? -3 : 0;
+    // Past the beginner stage, a main lift should be one you can keep loading (not a held dumbbell).
+    else if (!isNew(a) && slot.pri === 1 && meta.light && loadable) sc -= 1.5;
     // Preference.
     const machine = meta.needs.includes('machine') || meta.needs.includes('cable');
     const free = meta.needs.includes('db') || meta.needs.includes('bb');
@@ -492,7 +494,7 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
                 : focus === 'glutes'
                   ? ['glute', 'hinge', 'glute']
                   : ['chest_iso', 'h_pull', 'side_delt'];
-    const bp: DayBlueprint = { key: 'bonus', name: 'בונוס', subtitle: 'קצר, אפשר לדלג בשבוע עמוס', slots: patterns.map((p) => s(p, 1)), fillers: [] };
+    const bp: DayBlueprint = { key: 'bonus', name: 'אימון קצר', subtitle: 'בונוס, אפשר לדלג בשבוע עמוס', slots: patterns.map((p) => s(p, 1)), fillers: [] };
     const picks = buildDay(bp, Math.min(40, a.minutes));
     sessions.push({
       id: 'gen-bonus',
@@ -534,13 +536,13 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
     general: 'כושר כללי',
   };
   reasons.push(
-    `מטרה: ${goalText[a.goal]}. תרגילים מרכזיים ${r.main.reps[0]}–${r.main.reps[1]} חזרות, תרגילי בידוד ${r.iso.reps[0]}–${r.iso.reps[1]}.`,
+    `מטרה: ${goalText[a.goal]}. תרגילים מרכזיים ${ltr(`${r.main.reps[0]}–${r.main.reps[1]}`)} חזרות, תרגילי בידוד ${ltr(`${r.iso.reps[0]}–${r.iso.reps[1]}`)}.`,
   );
   if (a.goal === 'fatloss') reasons.push('לירידה בשומן: מנוחות קצרות יותר. התזונה היא שעושה את רוב העבודה.');
-  if (isNew(a)) reasons.push('בתחילת הדרך: 2–3 סטים לתרגיל ותרגילים פשוטים טכנית. ההתקדמות תבוא מהר.');
+  if (isNew(a)) reasons.push(`בתחילת הדרך: ${ltr('2–3')} סטים לתרגיל ותרגילים פשוטים טכנית. ההתקדמות תבוא מהר.`);
   if (a.experience === 'gt2y') reasons.push('ניסיון של יותר משנתיים: 4 סטים בתרגילים המרכזיים.');
-  if (a.age === '56p') reasons.push('גיל 56+: מנוחות ארוכות יותר בתרגילים המרכזיים ובחירה בתרגילים עדינים למפרקים.');
-  else if (a.age === '41_55') reasons.push('גיל 41–55: עדיפות קלה למכונות ולתרגילים פחות טכניים.');
+  if (a.age === '56p') reasons.push(`גיל ${ltr('56+')}: מנוחות ארוכות יותר בתרגילים המרכזיים ובחירה בתרגילים עדינים למפרקים.`);
+  else if (a.age === '41_55') reasons.push(`גיל ${ltr('41–55')}: עדיפות קלה למכונות ולתרגילים פחות טכניים.`);
 
   const painText: Record<Joint, string> = { lowBack: 'גב תחתון', knees: 'ברכיים', shoulders: 'כתפיים', elbows: 'מרפקים' };
   if (a.limits.length) {
@@ -568,7 +570,7 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
     );
   }
   const counts = sessions.filter((t) => t.kind === 'strength' && !t.bonus).map((t) => t.exercises.length);
-  reasons.push(`${a.minutes} דקות לאימון: ${Math.min(...counts) === Math.max(...counts) ? counts[0] : `${Math.min(...counts)}–${Math.max(...counts)}`} תרגילים בכל אימון.`);
+  reasons.push(`${a.minutes} דקות לאימון: ${Math.min(...counts) === Math.max(...counts) ? counts[0] : ltr(`${Math.min(...counts)}–${Math.max(...counts)}`)} תרגילים בכל אימון.`);
   const calibrationDays = a.experience === 'none' || a.recent === 'no' ? 21 : 14;
   reasons.push(
     calibrationDays === 21
@@ -597,6 +599,9 @@ function ordered(picks: Pick[]): Pick[] {
   };
   return picks.map((p, i) => ({ p, i })).sort((x, y) => rank(x.p) - rank(y.p) || x.i - y.i).map((x) => x.p);
 }
+
+/** Keeps a number range like "6–10" left-to-right inside Hebrew text (Unicode isolate marks). */
+const ltr = (s: string) => `⁦${s}⁩`;
 
 const roundTo5 = (n: number) => Math.max(15, Math.round(n / 5) * 5);
 

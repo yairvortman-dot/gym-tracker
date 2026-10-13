@@ -81,6 +81,7 @@ export async function importBackup(b: Backup) {
       { key: 'program', value: b.program },
       { key: 'settings', value: b.settings },
       { key: 'seeded', value: true },
+      { key: 'onboarding', value: 'done' },
     ]);
   });
 }

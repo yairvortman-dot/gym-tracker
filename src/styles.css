@@ -1581,3 +1581,229 @@ select.text-input {
 .pick-custom .field {
   flex: 1;
 }
+
+/* ---------- onboarding ---------- */
+
+.app-full {
+  padding-bottom: calc(var(--safe-b) + 24px);
+}
+
+.onb {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: calc(100dvh - var(--safe-t) - var(--safe-b) - 36px);
+}
+
+.onb-welcome {
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.onb-cancel {
+  align-self: flex-start;
+}
+
+.onb-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 12vh;
+}
+
+.onb-mark {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.onb-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.onb-lead {
+  font-size: 1.1rem;
+  color: var(--text-2);
+  max-width: 34ch;
+}
+
+.onb-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 40ch;
+}
+
+.onb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onb-secondary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.onb-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: -8px;
+}
+
+.onb-progress {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.onb-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: inline-size 0.25s ease;
+}
+
+.onb-count {
+  font-size: 0.85rem;
+  color: var(--muted);
+  direction: ltr;
+  min-width: 2.6em;
+  text-align: center;
+}
+
+.onb-q {
+  font-size: 1.7rem;
+  font-weight: 750;
+  line-height: 1.2;
+  margin-top: 12px;
+}
+
+.onb-hint {
+  color: var(--muted);
+  margin-top: -6px;
+}
+
+.onb-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.onb-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  text-align: start;
+}
+
+.onb-option.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.onb-option-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.onb-option-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.onb-option-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.onb-check {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 2px solid var(--muted);
+  color: var(--accent-ink);
+}
+
+.onb-check.dot {
+  border-radius: 50%;
+}
+
+.onb-check.box {
+  border-radius: 8px;
+}
+
+.onb-option.on .onb-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.onb-sticky {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 12px 0 calc(var(--safe-b) + 4px);
+  background: linear-gradient(to top, var(--bg) 75%, transparent);
+}
+
+.onb-why ul {
+  margin: 0;
+  padding-inline-start: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-2);
+}
+
+.onb-session {
+  gap: 6px;
+}
+
+.onb-session-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.onb-session-head h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.onb-session .next-list {
+  margin: 4px 0 0;
+}
+
+.onb-dose {
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onb-progress-fill {
+    transition: none;
+  }
+}

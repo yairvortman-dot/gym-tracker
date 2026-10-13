@@ -62,6 +62,21 @@ The home screen reminds you if you haven't exported a backup in 14 days. Back up
 
 ## How it works
 
+### A personal program from a questionnaire
+
+A new device opens on a welcome screen, then up to 15 multiple-choice questions (`src/data/questions.ts`): goal, experience, recent training, age, days per week, minutes per session, equipment, machines vs free weights, emphasis, pain, exercises to avoid, cardio, abs, how busy the week is, and a bonus session. Questions that don't apply are skipped (no "recent training" for a first-timer, no machine preference without machines).
+
+The program is built on the device by a rule-based builder (`src/logic/generator.ts`). No AI service, no internet, no cost, and the same answers always give the same program:
+
+1. **Weekly structure** from the number of days: 2–3 full-body days, 4 upper/lower days, 5 adds a day picked by emphasis.
+2. **Each session is a list of movement slots** (horizontal press, row, squat, hinge, lateral raise…) ranked by importance.
+3. **Each slot gets the best-scoring exercise** from the library (`src/data/exerciseLibrary.ts` + `exerciseMeta.ts`): it must fit the equipment; exercises that load a painful joint are left out or avoided; technical lifts are held back from beginners; age, preference and variety across the week also count.
+4. **Sets, reps and rest** come from goal and experience. Heavy 4–6 rep work is only used on lifts that can really be loaded, and never on an exercise that stresses a painful joint.
+5. **Fitting to time** works like a coach: drop the extras, trim secondary exercises to 2 sets, and only then drop a secondary exercise. Main lifts lose sets last. Spare time goes to the emphasized area, then to the main lifts, then to small extra exercises. If even the minimum doesn't fit, the summary says so.
+6. **A summary screen** shows the program and a plain-language "why" for each decision before anything is saved.
+
+Settings → **בנה לי תוכנית חדשה לפי שאלון** runs it again, starting from the previous answers. History is kept. Devices that were already in use before the questionnaire existed never see it.
+
 ### The program is data
 
 The program lives in `src/data/defaultProgram.ts`. Everything can be edited in the app under **Settings → התוכנית**: sessions, their order, exercises, sets, rep ranges, rest times, muscle group, equipment and per-side tracking. **שחזר תוכנית מקורית** restores the original.

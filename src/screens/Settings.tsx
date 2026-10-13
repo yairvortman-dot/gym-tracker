@@ -105,6 +105,9 @@ export function Settings() {
             שחזר תוכנית מקורית
           </button>
         </div>
+        <button type="button" className="btn btn-outline btn-block" onClick={() => go('/onboarding')}>
+          בנה לי תוכנית חדשה לפי שאלון
+        </button>
         <p className="muted small">
           יעדי סטים שבועיים לפי התוכנית:{' '}
           {muscleOrder
