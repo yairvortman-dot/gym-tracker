@@ -1107,9 +1107,35 @@ textarea.text-input {
   background: var(--line);
 }
 
+.sheet-head {
+  position: sticky;
+  top: -10px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: -10px -16px 0;
+  padding: 10px 16px 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.sheet-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .sheet-title {
+  flex: 1;
+  min-width: 0;
   font-size: 1.35rem;
   font-weight: 700;
+  line-height: 1.25;
+}
+
+.sheet-close {
+  flex: none;
 }
 
 .sheet-warn {

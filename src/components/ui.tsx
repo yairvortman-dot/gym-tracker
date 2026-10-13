@@ -128,16 +128,29 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
     if (!props.open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') props.onClose();
+    };
+    window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
     };
-  }, [props.open]);
+  }, [props.open]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!props.open) return null;
   return (
     <div className="sheet-backdrop" onClick={props.onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label={props.title} onClick={(e) => e.stopPropagation()}>
-        <div className="sheet-handle" aria-hidden />
-        <h2 className="sheet-title">{props.title}</h2>
+        {/* Stays at the top while the list scrolls, so cancelling is always one tap away. */}
+        <div className="sheet-head">
+          <div className="sheet-handle" aria-hidden />
+          <div className="sheet-title-row">
+            <h2 className="sheet-title">{props.title}</h2>
+            <button type="button" className="btn btn-small btn-outline sheet-close" onClick={props.onClose}>
+              ביטול
+            </button>
+          </div>
+        </div>
         {props.children}
       </div>
     </div>
