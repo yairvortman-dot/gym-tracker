@@ -8,7 +8,7 @@ import { daysAgo } from '../lib/format';
 import { go } from '../lib/router';
 import { wakeLockSupported } from '../lib/wakeLock';
 import { newId } from '../logic/session';
-import { weeklyTargets, muscleLabel, muscleOrder } from '../logic/weekly';
+import { weeklyTargets, weeklyLabel, weeklyOrder } from '../logic/weekly';
 
 export const equipmentLabel: Record<Equipment, string> = {
   dumbbell: 'משקולות יד',
@@ -110,9 +110,9 @@ export function Settings() {
         </button>
         <p className="muted small">
           יעדי סטים שבועיים לפי התוכנית:{' '}
-          {muscleOrder
+          {weeklyOrder
             .filter((m) => targets.withBonus[m] > 0)
-            .map((m) => `${muscleLabel[m]} ${targets.base[m]}${targets.withBonus[m] !== targets.base[m] ? ` (${targets.withBonus[m]})` : ''}`)
+            .map((m) => `${weeklyLabel[m]} ${targets.base[m]}${targets.withBonus[m] !== targets.base[m] ? ` (${targets.withBonus[m]})` : ''}`)
             .join(', ')}
           . בסוגריים: עם הבונוס.
         </p>

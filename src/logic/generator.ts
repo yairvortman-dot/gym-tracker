@@ -1,7 +1,8 @@
-import type { ExerciseTemplate, MuscleGroup, Program, SessionTemplate } from '../types';
+import type { ExerciseTemplate, Program, SessionTemplate } from '../types';
 import { exerciseLibrary, type LibraryExercise } from '../data/exerciseLibrary';
 import { exerciseMeta, type Gear, type Joint, type Pattern } from '../data/exerciseMeta';
 import { templateFrom } from './library';
+import { weeklyTargets, type Counts } from './weekly';
 
 // ---------- answers ----------
 
@@ -58,6 +59,8 @@ interface Slot {
   pattern: Pattern;
   /** 1 = the session's main lifts, never removed. 3 = first to go when time is short. */
   pri: Pri;
+  /** A fixed number of sets instead of the usual for the person's level. */
+  sets?: number;
 }
 
 interface DayBlueprint {
@@ -69,7 +72,7 @@ interface DayBlueprint {
   fillers: Pattern[];
 }
 
-const s = (pattern: Pattern, pri: Pri): Slot => ({ pattern, pri });
+const s = (pattern: Pattern, pri: Pri, sets?: number): Slot => ({ pattern, pri, sets });
 
 const DAYS: Record<string, DayBlueprint> = {
   fbA: {
@@ -118,18 +121,27 @@ const DAYS: Record<string, DayBlueprint> = {
     slots: [s('hinge', 1), s('squat', 2), s('glute', 2), s('ham_curl', 2), s('lunge', 3), s('calves', 3)],
     fillers: [],
   },
+  lower: {
+    key: 'lower',
+    name: 'תחתון',
+    subtitle: 'יום רגליים',
+    slots: [s('squat', 1), s('hinge', 1), s('lunge', 2), s('ham_curl', 2), s('calves', 2), s('glute', 3), s('quad_iso', 3)],
+    fillers: [],
+  },
+  fbL: {
+    key: 'fbL',
+    name: 'גוף מלא',
+    subtitle: 'רגליים ועליון',
+    // The week's legs in two big lifts: a squat for 4 sets and a hinge for the back of the leg.
+    // The row is secondary here: the upper days already carry the pulling work.
+    slots: [s('squat', 1, 4), s('hinge', 1), s('h_push', 1), s('h_pull', 2), s('side_delt', 2), s('triceps', 3), s('biceps', 3)],
+    fillers: ['rear_delt'],
+  },
   upC: {
     key: 'upC',
     name: 'עליון ג׳',
     slots: [s('incline_push', 1), s('v_pull', 1), s('v_push', 2), s('h_pull', 2), s('chest_iso', 3), s('side_delt', 3)],
     fillers: ['biceps', 'triceps'],
-  },
-  loC: {
-    key: 'loC',
-    name: 'תחתון ג׳',
-    subtitle: 'ישבן ורגליים',
-    slots: [s('glute', 1), s('lunge', 1), s('hinge', 2), s('ham_curl', 2), s('quad_iso', 3), s('calves', 3)],
-    fillers: [],
   },
   arms: {
     key: 'arms',
@@ -349,7 +361,7 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
       if (!ex) continue;
       taken.add(ex.id);
       const emph = emphasisOf(metaOf(ex.id).pattern).length > 0;
-      const sets = baseSets(a, metaOf(ex.id).role, slot.pri);
+      const sets = slot.sets ?? baseSets(a, metaOf(ex.id).role, slot.pri);
       picks.push({ ex, slot, sets, emphasized: emph });
     }
 
@@ -445,21 +457,50 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
   };
 
   // ---- weekly structure ----
+  // Never more than two leg days, so the fifth day is always an upper or arms day.
   const fifthDay = (): string => {
-    if (a.emphasis.some((e) => e === 'legs' || e === 'glutes')) return 'loC';
     if (a.emphasis.some((e) => e === 'chest' || e === 'back')) return 'upC';
     return gear.size > 0 ? 'arms' : 'upC';
   };
-  const split: string[] =
-    a.days === 2 ? ['fbA', 'fbB'] : a.days === 3 ? ['fbA', 'fbB', 'fbC'] : a.days === 4 ? ['upA', 'loA', 'upB', 'loB'] : ['upA', 'loA', 'upB', 'loB', fifthDay()];
+  // One complete leg day a week by default. Two only for a legs/glutes emphasis or a strength goal
+  // (squats and hinges improve faster practised twice a week), or when there's no equipment for an arms day.
+  const legEmphasis = a.emphasis.some((e) => e === 'legs' || e === 'glutes');
+  const twoLegDays = legEmphasis || a.goal === 'strength' || (a.days === 5 && gear.size === 0);
+  const split: string[] = twoLegDays
+    ? a.days === 2
+      ? ['fbA', 'fbB']
+      : a.days === 3
+        ? ['fbA', 'fbB', 'fbC']
+        : a.days === 4
+          ? ['upA', 'loA', 'upB', 'loB']
+          : ['upA', 'loA', 'upB', 'loB', fifthDay()]
+    : a.days === 2
+      ? ['fbL', 'upB']
+      : a.days === 3
+        ? ['upA', 'fbL', 'upB']
+        : a.days === 4
+          ? ['upA', 'lower', 'upB', 'upC']
+          : ['upA', 'lower', 'upB', 'upC', 'arms'];
 
-  reasons.push(
-    a.days <= 3
-      ? `${a.days} ימים בשבוע: אימוני גוף מלא, כך שכל שריר עובד ${a.days} פעמים בשבוע.`
-      : a.days === 4
-        ? '4 ימים בשבוע: עליון ותחתון לסירוגין, כל שריר עובד פעמיים בשבוע.'
-        : `5 ימים בשבוע: עליון ותחתון פעמיים, ועוד יום ${DAYS[split[4]].name}${a.emphasis.length ? ' לפי הדגש שבחרת' : ''}.`,
-  );
+  // Upper days are lettered in the order they appear (a single one is just "עליון").
+  const letters = ['א׳', 'ב׳', 'ג׳'];
+  const uppers = split.filter((k) => k.startsWith('up'));
+  const nameOf = (key: string) => (key.startsWith('up') ? (uppers.length === 1 ? 'עליון' : `עליון ${letters[uppers.indexOf(key)]}`) : DAYS[key].name);
+
+  if (twoLegDays) {
+    const why = legEmphasis ? 'בגלל הדגש על רגליים או ישבן' : a.goal === 'strength' ? 'כי במטרת כוח מתרגלים סקוואט והרמות פעמיים בשבוע' : 'כי בלי ציוד אין מספיק תרגילים ליום ידיים';
+    reasons.push(
+      a.days <= 3
+        ? `${a.days} ימים בשבוע: אימוני גוף מלא, והרגליים עובדות בכל אימון ${why}.`
+        : `${a.days} ימים בשבוע: שני ימי רגליים ${why}, והשאר עליון${a.days === 5 ? ` ועוד יום ${DAYS[split[4]].name}` : ''}.`,
+    );
+  } else {
+    reasons.push(
+      a.days <= 3
+        ? `${a.days} ימים בשבוע: יום אחד של גוף מלא עם הרגליים (סקוואט ל-4 סטים והרמה רומנית, שעובדים כמעט על כל הרגל), והשאר עליון.`
+        : `${a.days} ימים בשבוע: יום רגליים אחד ומלא, והשאר עליון${a.days === 5 ? ', כולל יום כתפיים וידיים' : ''}. שני ימי רגליים רק בדגש רגליים או ישבן.`,
+    );
+  }
 
   const sessions: SessionTemplate[] = [];
   for (const key of split) {
@@ -468,7 +509,7 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
     const exercises = ordered(picks).map(toTemplate);
     sessions.push({
       id: `gen-${key}`,
-      name: bp.name,
+      name: nameOf(key),
       subtitle: bp.subtitle,
       durationMin: roundTo5(estimate(picks)),
       kind: 'strength',
@@ -610,9 +651,7 @@ function isoDate(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** Sets per muscle group per week in a generated program (for tests and the summary). */
-export function weeklySetsOf(program: Program): Record<MuscleGroup, number> {
-  const out = { chest: 0, back: 0, legs: 0, shoulders: 0, arms: 0, core: 0, other: 0 } as Record<MuscleGroup, number>;
-  for (const t of program.sessions) if (!t.bonus) for (const e of t.exercises) out[e.muscle] += e.sets;
-  return out;
+/** Planned sets per group per week, legs split into their parts (bonus session not counted). */
+export function weeklySetsOf(program: Program): Counts {
+  return weeklyTargets(program).base;
 }

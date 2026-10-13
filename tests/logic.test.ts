@@ -131,6 +131,23 @@ describe('seeded paper session', () => {
     expect(next.exercises[0].target!.kind).toBe('override');
   });
 
+  it('splits legs into front, back and calves in the weekly count', () => {
+    const lower = defaultProgram.sessions.find((t) => t.id === 'lower')!;
+    const sess = createSession({
+      tpl: lower,
+      settings: defaultSettings,
+      sessions: [],
+      readiness: { sleepHours: 8, energy: 4, sick: false, backPain: false },
+      dayState: 'green',
+      dayStateAuto: 'green',
+      now: at(2026, 10, 14),
+    });
+    for (const ex of sess.exercises) ex.sets = ex.sets.map((x) => ({ ...x, reps: 10, repsL: 10, repsR: 10, status: 'done' as const }));
+    const w = weeklySets([sess], weekStart(sess.startedAt));
+    // סקוואט גביע 4 + בולגרי 3 | רומנית 3 + כפיפת ברכיים 3 | עקבים 3
+    expect([w.quads, w.posterior, w.calves, w.legs]).toEqual([7, 6, 3, 0]);
+  });
+
   it('counts the seed week: chest 9, shoulders 5, arms 0 (skipped sets excluded)', () => {
     const w = weeklySets([seed], weekStart(seed.startedAt));
     expect(w.chest).toBe(9);

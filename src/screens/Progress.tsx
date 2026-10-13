@@ -4,7 +4,7 @@ import { LineChart } from '../components/LineChart';
 import { Icon, Num } from '../components/ui';
 import { addDays, weekStart } from '../logic/day';
 import { topWeight, totalReps, wasPerformed } from '../logic/sets';
-import { muscleLabel, muscleOrder, weeklySets, weeklyTargets } from '../logic/weekly';
+import { weeklyLabel, weeklyOrder, weeklySets, weeklyTargets } from '../logic/weekly';
 import { fmtDate, fmtNum, fmtSets, fmtShortDate } from '../lib/format';
 import { go } from '../lib/router';
 import type { ExerciseLog, Program, SessionLog } from '../types';
@@ -73,7 +73,7 @@ function WeeklySummary({ sessions, program }: { sessions: SessionLog[]; program:
   const start = addDays(weekStart(Date.now()), -7 * offset);
   const counts = weeklySets(sessions, start);
   const { base, withBonus } = weeklyTargets(program);
-  const groups = muscleOrder.filter((m) => withBonus[m] > 0 || counts[m] > 0);
+  const groups = weeklyOrder.filter((m) => withBonus[m] > 0 || counts[m] > 0);
 
   return (
     <section className="weekly card-plain">
@@ -106,7 +106,7 @@ function WeeklySummary({ sessions, program }: { sessions: SessionLog[]; program:
           return (
             <li key={m} className="meter-row">
               <div className="meter-text">
-                <span className="meter-name">{muscleLabel[m]}</span>
+                <span className="meter-name">{weeklyLabel[m]}</span>
                 <span className="meter-value">
                   <strong className="num">{counts[m]}</strong>
                   <span className="muted">
@@ -122,7 +122,7 @@ function WeeklySummary({ sessions, program }: { sessions: SessionLog[]; program:
                   {reached && <Icon name="check" size={16} />}
                 </span>
               </div>
-              <div className="meter" role="meter" aria-valuenow={counts[m]} aria-valuemin={0} aria-valuemax={withBonus[m]} aria-label={muscleLabel[m]}>
+              <div className="meter" role="meter" aria-valuenow={counts[m]} aria-valuemin={0} aria-valuemax={withBonus[m]} aria-label={weeklyLabel[m]}>
                 <div className="meter-fill" style={{ inlineSize: `${(Math.min(counts[m], scale) / scale) * 100}%` }} />
                 {base[m] > 0 && <div className="meter-mark" style={{ insetInlineStart: `${(base[m] / scale) * 100}%` }} />}
               </div>
