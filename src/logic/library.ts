@@ -75,6 +75,33 @@ export function pickerGroups(pool: LibraryExercise[], session: ExerciseTemplate[
   return { relevant: group(relevant), others: group(others) };
 }
 
+/** Id of an exercise with this exact name elsewhere, so a re-added exercise keeps its history. */
+export function existingIdByName(
+  name: string,
+  programExercises: ExerciseTemplate[],
+  logged: { exId: string; name: string }[],
+): string | undefined {
+  const n = name.trim();
+  return programExercises.find((e) => e.name.trim() === n)?.id ?? logged.find((e) => e.name.trim() === n)?.exId;
+}
+
+/** A person's own exercise, named freely. Muscle defaults to the one it replaces or sits next to. */
+export function customTemplate(id: string, name: string, base?: Pick<ExerciseTemplate, 'sets' | 'muscle'>): ExerciseTemplate {
+  return {
+    id,
+    name,
+    sets: base?.sets ?? 3,
+    repMin: 8,
+    repMax: 12,
+    restMinSec: 90,
+    restMaxSec: 90,
+    unilateral: false,
+    weightMode: 'perHand',
+    equipment: 'dumbbell',
+    muscle: base?.muscle ?? 'chest',
+  };
+}
+
 /** A program entry built from a library pick. The library's finer focus tag isn't stored. */
 export function templateFrom(x: LibraryExercise): ExerciseTemplate {
   const t: LibraryExercise = { ...x };

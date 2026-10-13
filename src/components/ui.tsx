@@ -180,6 +180,7 @@ const paths: Record<string, ReactNode> = {
   forward: <path d="M15 6l-6 6 6 6" />,
   trash: <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />,
   note: <path d="M5 5h14v10l-4 4H5zM15 19v-4h4" />,
+  swap: <path d="M7 4L4 7l3 3M4 7h13M17 20l3-3-3-3M20 17H7" />,
 };
 
 export function Icon({ name, size = 22 }: { name: keyof typeof paths | string; size?: number }) {

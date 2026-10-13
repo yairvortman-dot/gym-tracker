@@ -28,6 +28,8 @@ export function ExerciseCard(props: {
   onChange: (ex: ExerciseLog) => void;
   /** Called after a set is ticked done or skipped (live sessions start the rest timer and move on). */
   onSetDone?: (setIndex: number, how: 'done' | 'skipped') => void;
+  /** Opens the exercise picker to swap this exercise for another. */
+  onReplace?: () => void;
   mode: 'live' | 'edit';
 }) {
   const { ex, last, index, selected, mode } = props;
@@ -193,6 +195,11 @@ export function ExerciseCard(props: {
           {ex.sets.length > 1 && ex.sets[ex.sets.length - 1].status === 'pending' && !hasReps(ex.sets[ex.sets.length - 1], uni) && (
             <button type="button" className="btn-text" onClick={() => props.onChange({ ...ex, sets: ex.sets.slice(0, -1) })}>
               <Icon name="minus" size={18} /> הסר סט
+            </button>
+          )}
+          {props.onReplace && (
+            <button type="button" className="btn-text" onClick={props.onReplace}>
+              <Icon name="swap" size={18} /> החלף תרגיל
             </button>
           )}
           <button type="button" className="btn-text danger" onClick={() => props.onChange({ ...ex, skipped: true })}>

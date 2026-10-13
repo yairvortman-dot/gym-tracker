@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { ExerciseTemplate } from '../types';
 import { focusLabel, type LibraryExercise } from '../data/exerciseLibrary';
 import { exercisePool, pickerGroups, type PickerGroup } from '../logic/library';
@@ -16,6 +16,8 @@ export function ExercisePicker(props: {
   programExercises: ExerciseTemplate[];
   /** The exercise being replaced, if any. It isn't marked as "already in the session". */
   replacing?: ExerciseTemplate;
+  /** Shown under the search box, e.g. the "also change it in the program" toggle. */
+  extra?: ReactNode;
   onPick: (x: LibraryExercise) => void;
   onCustom: (name: string) => void;
   onClose: () => void;
@@ -78,6 +80,7 @@ export function ExercisePicker(props: {
         onChange={(e) => setQuery(e.target.value)}
         aria-label="חיפוש תרגיל"
       />
+      {props.extra}
 
       {searching ? (
         matches.length > 0 ? (

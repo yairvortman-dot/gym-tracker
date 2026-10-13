@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { DayState, ExerciseLog, SessionLog } from '../types';
-import { db, deleteSession, saveSession, useSessions, useSettings } from '../db';
+import type { DayState, ExerciseLog, ExerciseTemplate, SessionLog } from '../types';
+import { db, deleteSession, saveProgram, saveSession, useProgram, useSessions, useSettings } from '../db';
 import { ExerciseCard, type Selection } from '../components/ExerciseCard';
+import { ExercisePicker } from '../components/ExercisePicker';
+import { customTemplate, existingIdByName, templateFrom } from '../logic/library';
 import { useRestTimer } from '../components/RestTimer';
 import { Icon, Num, Segmented, Sheet, Stepper, Toggle } from '../components/ui';
 import { dayStateLabel, dayStateRule } from '../logic/day';
 import { lastPerformance } from '../logic/history';
-import { elapsedMin, finalizeSession, stepFor } from '../logic/session';
+import {
+  elapsedMin,
+  finalizeSession,
+  newId,
+  replaceExerciseInProgram,
+  replaceExerciseInSession,
+  stepFor,
+  templateOfLog,
+} from '../logic/session';
 import { hasReps } from '../logic/sets';
 import { fmtClock, fmtDate, fmtTime } from '../lib/format';
 import { go } from '../lib/router';
@@ -33,6 +43,11 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
   const timer = useRestTimer();
   const [sel, setSel] = useState<Selection | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
+  const program = useProgram();
+  // Index of the exercise being swapped, and whether the swap also goes into the program.
+  const [replaceIdx, setReplaceIdx] = useState<number | null>(null);
+  const [alsoProgram, setAlsoProgram] = useState(false);
+  const [notice, setNotice] = useState<{ ex: number; text: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -59,7 +74,7 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
     if (!log || !sessions) return map;
     for (const e of log.exercises) map.set(e.exId, lastPerformance(sessions, e.exId, log.startedAt));
     return map;
-  }, [log?.startedAt, log?.exercises.length, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [log?.startedAt, log?.exercises.map((e) => e.exId).join('|'), sessions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (log === undefined || !settings) return <div className="screen" />;
   if (log === null) {
@@ -80,6 +95,30 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
     const ex = log.exercises[exIdx];
     if (how === 'done' && ex.plan.restMinSec > 0) timer.start(ex.plan.restMinSec, `${ex.name} · סט ${setIdx + 1}`);
     setSel(firstPending(log, exIdx, setIdx) ?? firstPending(log));
+  };
+
+  const programExercises = program?.sessions.flatMap((t) => t.exercises) ?? [];
+
+  const replaceWith = (t: ExerciseTemplate) => {
+    if (replaceIdx == null || !sessions) return;
+    const old = log.exercises[replaceIdx];
+    const logged = old.sets.some((s) => s.status !== 'pending' || hasReps(s, old.plan.unilateral));
+    if (logged && !confirm(`ב"${old.name}" כבר רשומים סטים. להחליף ולמחוק אותם?`)) return;
+    const linked = { ...t, id: existingIdByName(t.name, programExercises, sessions.flatMap((s) => s.exercises)) ?? t.id };
+    update(replaceExerciseInSession(log, replaceIdx, linked, { settings, sessions }));
+    if (alsoProgram && program && mode === 'live') {
+      const next = replaceExerciseInProgram(program, log.templateId, old.exId, linked);
+      if (next) {
+        void saveProgram(next);
+        setNotice({ ex: replaceIdx, text: `מעכשיו "${linked.name}" יופיע ב${log.templateName} במקום "${old.name}".` });
+      } else {
+        setNotice({ ex: replaceIdx, text: `לא מצאתי את "${old.name}" בתוכנית, אז ההחלפה היא רק להיום.` });
+      }
+    } else {
+      setNotice(null);
+    }
+    if (mode === 'live') setSel({ ex: replaceIdx, set: 0 });
+    setReplaceIdx(null);
   };
 
   const optionals = log.exercises.map((e, i) => ({ e, i })).filter(({ e }) => e.optional);
@@ -124,6 +163,11 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
           {log.exercises.map((ex, i) =>
             visible(ex) ? (
               <div key={`${ex.exId}-${i}`}>
+                {notice?.ex === i && (
+                  <p className="notice" role="status">
+                    {notice.text}
+                  </p>
+                )}
                 {ex.optional === 'picked' && (
                   <div className="optional-tag">
                     תרגיל אופציונלי
@@ -143,6 +187,10 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
                   onSelect={(s) => setSel(s == null ? null : { ex: i, set: s })}
                   onChange={(next) => setExercise(i, next)}
                   onSetDone={(s, how) => onSetDone(i, s, how)}
+                  onReplace={() => {
+                    setAlsoProgram(false);
+                    setReplaceIdx(i);
+                  }}
                   mode={mode}
                 />
               </div>
@@ -193,6 +241,27 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
           <Icon name="trash" /> מחק אימון
         </button>
       )}
+
+      <ExercisePicker
+        open={replaceIdx != null}
+        title={replaceIdx != null ? `החלפת ${log.exercises[replaceIdx]?.name ?? 'תרגיל'}` : ''}
+        session={log.exercises.filter(visible).map(templateOfLog)}
+        programExercises={programExercises}
+        replacing={replaceIdx != null ? templateOfLog(log.exercises[replaceIdx]) : undefined}
+        extra={
+          mode === 'live' ? (
+            <Toggle checked={alsoProgram} onChange={setAlsoProgram}>
+              להחליף גם בתוכנית, לא רק היום
+            </Toggle>
+          ) : undefined
+        }
+        onPick={(x) => replaceWith(templateFrom(x))}
+        onCustom={(name) => {
+          const old = replaceIdx != null ? log.exercises[replaceIdx] : undefined;
+          replaceWith(customTemplate(newId(), name, old && { sets: old.sets.length, muscle: old.plan.muscle }));
+        }}
+        onClose={() => setReplaceIdx(null)}
+      />
 
       {mode === 'live' && (
         <FinishSheet
