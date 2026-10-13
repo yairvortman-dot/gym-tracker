@@ -322,12 +322,23 @@ function LiveHeader({ log, onFinish }: { log: SessionLog; onFinish: () => void }
   }, []);
   const elapsed = (now - log.startedAt) / 1000;
   const h = Math.floor(elapsed / 3600);
+  const planned = log.exercises.filter((e) => visible(e) && !e.skipped);
+  const setsTotal = planned.reduce((n, e) => n + e.sets.length, 0);
+  const setsDone = planned.reduce((n, e) => n + e.sets.filter((s) => s.status === 'done').length, 0);
   return (
     <div className="topbar topbar-live">
       <div className="live-title">
         <h1 className="topbar-title">{log.templateName}</h1>
         <span className="live-sub">
           <span className={`dot dot-${log.dayState}`} aria-hidden /> התחלת ב-<Num>{fmtTime(log.startedAt)}</Num>
+          {log.kind === 'strength' && (
+            <>
+              {' '}
+              · <span className="nowrap">
+                <Num>{`${setsDone}/${setsTotal}`}</Num> סטים
+              </span>
+            </>
+          )}
         </span>
       </div>
       <span className="live-clock num" aria-label="זמן אימון">

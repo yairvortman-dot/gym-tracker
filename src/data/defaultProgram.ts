@@ -102,4 +102,5 @@ export const defaultSettings: Settings = {
   calibrationDays: 14,
   absFinisher: true,
   sound: true,
+  theme: 'system',
 };

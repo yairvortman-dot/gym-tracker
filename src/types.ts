@@ -48,6 +48,8 @@ export interface Settings {
   /** Show the "10 דקות בטן" checkbox when finishing a strength session. */
   absFinisher: boolean;
   sound: boolean;
+  /** Light or dark look; 'system' follows the phone. */
+  theme: 'system' | 'light' | 'dark';
 }
 
 export type SetStatus = 'pending' | 'done' | 'skipped';

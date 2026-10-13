@@ -39,6 +39,19 @@ export function App() {
     return () => window.removeEventListener('pointerdown', unlock);
   }, []);
 
+  // Light/dark: 'system' leaves it to the phone (CSS media query); otherwise pin it on <html>.
+  const theme = settings?.theme ?? 'system';
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'system') delete root.dataset.theme;
+    else root.dataset.theme = theme;
+    const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    for (const m of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+      if (theme === 'system') m.content = m.media.includes('dark') ? '#000000' : '#f2f2f7';
+      else m.content = dark ? '#000000' : '#f2f2f7';
+    }
+  }, [theme]);
+
   if (error) return <p className="empty">לא הצלחתי לפתוח את מסד הנתונים במכשיר: {error}</p>;
   if (!ready || !settings || !onboarding) return null;
 

@@ -48,10 +48,15 @@ export function useProgram(): Program | undefined {
   return useLiveQuery(() => getMeta<Program>('program'));
 }
 
+/** Settings saved by an older version lack newer fields; those get their defaults. */
+export function withDefaults(s: Partial<Settings>): Settings {
+  return { ...defaultSettings, ...s, kgStep: { ...defaultSettings.kgStep, ...s.kgStep } };
+}
+
 export function useSettings(): Settings | undefined {
   return useLiveQuery(async () => {
     const s = await getMeta<Settings>('settings');
-    return s ? { ...defaultSettings, ...s, kgStep: { ...defaultSettings.kgStep, ...s.kgStep } } : undefined;
+    return s ? withDefaults(s) : undefined;
   });
 }
 

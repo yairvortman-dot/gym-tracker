@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Equipment, Settings as SettingsT } from '../types';
 import { saveProgram, saveSettings, useMeta, useProgram, useSettings } from '../db';
 import { defaultProgram } from '../data/defaultProgram';
-import { Icon, Num, Stepper, Toggle } from '../components/ui';
+import { Icon, Num, Segmented, Stepper, Toggle } from '../components/ui';
 import { useConfirm } from '../components/Confirm';
 import { exportCsv, exportJson, importBackup, parseBackup } from '../lib/backup';
 import { daysAgo } from '../lib/format';
@@ -143,6 +143,20 @@ export function Settings() {
             />
           ))}
         </div>
+      </section>
+
+      <section className="card-plain">
+        <h2 className="section-title">תצוגה</h2>
+        <Segmented<SettingsT['theme']>
+          ariaLabel="מצב תצוגה"
+          value={settings.theme}
+          onChange={(v) => v && setS({ theme: v })}
+          options={[
+            { value: 'system', label: 'לפי הטלפון' },
+            { value: 'light', label: 'בהיר' },
+            { value: 'dark', label: 'כהה' },
+          ]}
+        />
       </section>
 
       <section className="card-plain">

@@ -124,7 +124,7 @@ function WeeklySummary({ sessions, program }: { sessions: SessionLog[]; program:
               </div>
               <div className="meter" role="meter" aria-valuenow={counts[m]} aria-valuemin={0} aria-valuemax={withBonus[m]} aria-label={weeklyLabel[m]}>
                 <div className="meter-fill" style={{ inlineSize: `${(Math.min(counts[m], scale) / scale) * 100}%` }} />
-                {base[m] > 0 && <div className="meter-mark" style={{ insetInlineStart: `${(base[m] / scale) * 100}%` }} />}
+                {base[m] > 0 && base[m] < scale && <div className="meter-mark" style={{ insetInlineStart: `${(base[m] / scale) * 100}%` }} />}
               </div>
             </li>
           );

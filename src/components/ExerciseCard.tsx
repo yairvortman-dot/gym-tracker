@@ -257,8 +257,9 @@ function SetRow(props: {
         <span className="set-n">סט {n}</span>
         <span className="set-summary">{summary}</span>
         <span className="set-status" aria-hidden>
-          {set.status === 'done' && <Icon name="check" size={20} />}
-          {set.status === 'skipped' && <Icon name="x" size={18} />}
+          {set.status === 'done' && <Icon name="check" size={18} />}
+          {set.status === 'skipped' && <Icon name="x" size={16} />}
+          {set.status === 'pending' && <span className="num">{n}</span>}
         </span>
       </button>
 
