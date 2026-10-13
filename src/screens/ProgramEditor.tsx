@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Equipment, ExerciseTemplate, MuscleGroup, SessionKind, SessionTemplate, WeightMode } from '../types';
 import { saveProgram, useProgram, useSessions } from '../db';
 import { ExercisePicker } from '../components/ExercisePicker';
+import { useConfirm } from '../components/Confirm';
 import type { LibraryExercise } from '../data/exerciseLibrary';
 import { templateFrom } from '../logic/library';
 import { Icon, Num, Segmented, Stepper, Toggle } from '../components/ui';
@@ -15,6 +16,7 @@ export function ProgramEditor({ tplId }: { tplId: string }) {
   const program = useProgram();
   const sessions = useSessions();
   const [open, setOpen] = useState<number | null>(null);
+  const confirm = useConfirm();
   // null = closed, 'add' = new exercise, a number = replace the exercise at that index.
   const [picker, setPicker] = useState<null | 'add' | number>(null);
   if (!program || !sessions) return <div className="screen" />;
@@ -186,8 +188,14 @@ export function ProgramEditor({ tplId }: { tplId: string }) {
                     onChange={(next) => setEx(i, next)}
                     onNameDone={(next) => linkByName(i, next)}
                     onReplace={() => setPicker(i)}
-                    onDelete={() => {
-                      if (!confirm(`למחוק את "${ex.name}" מהאימון? ההיסטוריה שלו נשארת.`)) return;
+                    onDelete={async () => {
+                      const ok = await confirm({
+                        title: `למחוק את "${ex.name}" מהאימון?`,
+                        body: 'ההיסטוריה שלו נשארת.',
+                        confirmLabel: 'מחק תרגיל',
+                        danger: true,
+                      });
+                      if (!ok) return;
                       save({ ...tpl, exercises: tpl.exercises.filter((_, k) => k !== i) });
                       setOpen(null);
                     }}
@@ -220,8 +228,14 @@ export function ProgramEditor({ tplId }: { tplId: string }) {
         type="button"
         className="btn btn-danger btn-block"
         disabled={program.sessions.length <= 1}
-        onClick={() => {
-          if (!confirm(`למחוק את "${tpl.name}" מהתוכנית? אימונים שכבר נרשמו נשארים בהיסטוריה.`)) return;
+        onClick={async () => {
+          const ok = await confirm({
+            title: `למחוק את "${tpl.name}" מהתוכנית?`,
+            body: 'אימונים שכבר נרשמו נשארים בהיסטוריה.',
+            confirmLabel: 'מחק אימון',
+            danger: true,
+          });
+          if (!ok) return;
           void saveProgram({ ...program, sessions: program.sessions.filter((t) => t.id !== tplId) });
           go('/settings');
         }}

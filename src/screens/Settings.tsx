@@ -3,6 +3,7 @@ import type { Equipment, Settings as SettingsT } from '../types';
 import { saveProgram, saveSettings, useMeta, useProgram, useSettings } from '../db';
 import { defaultProgram } from '../data/defaultProgram';
 import { Icon, Num, Stepper, Toggle } from '../components/ui';
+import { useConfirm } from '../components/Confirm';
 import { exportCsv, exportJson, importBackup, parseBackup } from '../lib/backup';
 import { daysAgo } from '../lib/format';
 import { go } from '../lib/router';
@@ -23,6 +24,7 @@ export function Settings() {
   const settings = useSettings();
   const lastExport = useMeta<number>('lastExport');
   const fileRef = useRef<HTMLInputElement>(null);
+  const confirm = useConfirm();
   const [msg, setMsg] = useState<string | null>(null);
   const [persisted, setPersisted] = useState<boolean | null>(null);
 
@@ -98,8 +100,14 @@ export function Settings() {
           <button
             type="button"
             className="btn btn-quiet"
-            onClick={() => {
-              if (confirm('להחזיר את התוכנית המקורית? השינויים שעשית בתוכנית יימחקו. ההיסטוריה נשארת.')) void saveProgram(defaultProgram);
+            onClick={async () => {
+              const ok = await confirm({
+                title: 'להחזיר את התוכנית המקורית?',
+                body: 'השינויים שעשית בתוכנית יימחקו. ההיסטוריה נשארת.',
+                confirmLabel: 'החזר תוכנית מקורית',
+                danger: true,
+              });
+              if (ok) void saveProgram(defaultProgram);
             }}
           >
             שחזר תוכנית מקורית
@@ -181,7 +189,13 @@ export function Settings() {
             if (!f) return;
             try {
               const b = parseBackup(await f.text());
-              if (!confirm(`לייבא ${b.sessions.length} אימונים מ-${b.exportedAt.slice(0, 10)}? כל מה שיש עכשיו במכשיר יוחלף.`)) return;
+              const ok = await confirm({
+                title: 'לייבא את הגיבוי?',
+                body: `${b.sessions.length} אימונים מ-${b.exportedAt.slice(0, 10)}. כל מה שיש עכשיו במכשיר יוחלף.`,
+                confirmLabel: 'ייבא והחלף',
+                danger: true,
+              });
+              if (!ok) return;
               await importBackup(b);
               setMsg(`יובאו ${b.sessions.length} אימונים.`);
             } catch (err) {

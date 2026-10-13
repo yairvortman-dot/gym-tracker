@@ -1807,3 +1807,49 @@ select.text-input {
     transition: none;
   }
 }
+
+/* ---------- confirm dialog ---------- */
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.confirm {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 18px 14px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.3);
+}
+
+.confirm-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.confirm-body {
+  color: var(--text-2);
+}
+
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.btn-danger-solid {
+  background: var(--red);
+  color: #fff;
+}

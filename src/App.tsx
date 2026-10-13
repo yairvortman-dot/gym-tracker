@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ensureSeeded, useOnboarding, useSessions, useSettings } from './db';
 import { RestTimerProvider } from './components/RestTimer';
+import { ConfirmProvider } from './components/Confirm';
 import { Icon } from './components/ui';
 import { go, useRoute } from './lib/router';
 import { unlockAudio } from './lib/alerts';
@@ -46,9 +47,11 @@ export function App() {
   // The questionnaire takes the whole screen: on a new device, or when rebuilding from Settings.
   if (onboarding === 'pending' || section === 'onboarding') {
     return (
-      <main className="app app-full">
-        <Onboarding key={onboarding} mode={onboarding === 'pending' ? 'first' : 'redo'} />
-      </main>
+      <ConfirmProvider>
+        <main className="app app-full">
+          <Onboarding key={onboarding} mode={onboarding === 'pending' ? 'first' : 'redo'} />
+        </main>
+      </ConfirmProvider>
     );
   }
   const activeId = sessions?.find((s) => s.status === 'active')?.id;
@@ -65,6 +68,7 @@ export function App() {
   const tabKey = section === 'start' ? '' : section;
 
   return (
+    <ConfirmProvider>
     <RestTimerProvider sound={settings.sound}>
       <main className="app">{screen}</main>
       <nav className="tabbar" aria-label="ניווט ראשי">
@@ -86,5 +90,6 @@ export function App() {
         })}
       </nav>
     </RestTimerProvider>
+    </ConfirmProvider>
   );
 }

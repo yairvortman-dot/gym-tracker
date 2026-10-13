@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { saveProgram, saveSettings, setMeta, useMeta, useSettings } from '../db';
 import { Icon, Num } from '../components/ui';
+import { useConfirm } from '../components/Confirm';
 import { answered, toAnswers, toDraft, visibleQuestions, type Draft, type Question } from '../data/questions';
 import { generateProgram, type Answers } from '../logic/generator';
 import { importBackup, parseBackup } from '../lib/backup';
@@ -12,6 +13,7 @@ import { go } from '../lib/router';
  */
 export function Onboarding({ mode }: { mode: 'first' | 'redo' }) {
   const settings = useSettings();
+  const confirm = useConfirm();
   const saved = useMeta<Answers>('answers');
   const [draft, setDraft] = useState<Draft>({});
   const [step, setStep] = useState(-1); // -1 = welcome, questions.length = summary
@@ -38,7 +40,15 @@ export function Onboarding({ mode }: { mode: 'first' | 'redo' }) {
 
   const finish = async () => {
     if (!result || !settings) return;
-    if (mode === 'redo' && !confirm('התוכנית הנוכחית תוחלף בתוכנית החדשה. ההיסטוריה שלך נשארת. להמשיך?')) return;
+    if (
+      mode === 'redo' &&
+      !(await confirm({
+        title: 'להחליף את התוכנית?',
+        body: 'התוכנית הנוכחית תוחלף בתוכנית החדשה. ההיסטוריה שלך נשארת.',
+        confirmLabel: 'כן, החלף את התוכנית',
+      }))
+    )
+      return;
     await saveProgram(result.program);
     await saveSettings({ ...settings, ...result.settings });
     await setMeta('answers', toAnswers(draft));
@@ -102,7 +112,12 @@ export function Onboarding({ mode }: { mode: 'first' | 'redo' }) {
             if (!f) return;
             try {
               const b = parseBackup(await f.text());
-              if (!confirm(`לייבא ${b.sessions.length} אימונים והתוכנית מהגיבוי?`)) return;
+              const ok = await confirm({
+                title: 'לייבא את הגיבוי?',
+                body: `${b.sessions.length} אימונים והתוכנית מהגיבוי ייכנסו למכשיר הזה.`,
+                confirmLabel: 'ייבא',
+              });
+              if (!ok) return;
               await importBackup(b);
               go('/');
             } catch (err) {

@@ -5,6 +5,7 @@ import { ExerciseCard, type Selection } from '../components/ExerciseCard';
 import { ExercisePicker } from '../components/ExercisePicker';
 import { customTemplate, existingIdByName, templateFrom } from '../logic/library';
 import { useRestTimer } from '../components/RestTimer';
+import { useConfirm } from '../components/Confirm';
 import { Icon, Num, Segmented, Sheet, Stepper, Toggle } from '../components/ui';
 import { dayStateLabel, dayStateRule } from '../logic/day';
 import { lastPerformance } from '../logic/history';
@@ -41,6 +42,7 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
   const sessions = useSessions();
   const settings = useSettings();
   const timer = useRestTimer();
+  const confirm = useConfirm();
   const [sel, setSel] = useState<Selection | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
   const program = useProgram();
@@ -99,11 +101,20 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
 
   const programExercises = program?.sessions.flatMap((t) => t.exercises) ?? [];
 
-  const replaceWith = (t: ExerciseTemplate) => {
+  const replaceWith = async (t: ExerciseTemplate) => {
     if (replaceIdx == null || !sessions) return;
     const old = log.exercises[replaceIdx];
     const logged = old.sets.some((s) => s.status !== 'pending' || hasReps(s, old.plan.unilateral));
-    if (logged && !confirm(`ב"${old.name}" כבר רשומים סטים. להחליף ולמחוק אותם?`)) return;
+    if (
+      logged &&
+      !(await confirm({
+        title: `להחליף את "${old.name}"?`,
+        body: 'כבר רשמת בו סטים. הם יימחקו מהאימון הזה.',
+        confirmLabel: 'החלף',
+        danger: true,
+      }))
+    )
+      return;
     const linked = { ...t, id: existingIdByName(t.name, programExercises, sessions.flatMap((s) => s.exercises)) ?? t.id };
     update(replaceExerciseInSession(log, replaceIdx, linked, { settings, sessions }));
     if (alsoProgram && program && mode === 'live') {
@@ -233,7 +244,13 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
           type="button"
           className="btn btn-danger btn-block"
           onClick={async () => {
-            if (!confirm(`למחוק את האימון "${log.templateName}" מ${fmtDate(log.startedAt)}? אי אפשר לבטל.`)) return;
+            const ok = await confirm({
+              title: 'למחוק את האימון?',
+              body: `"${log.templateName}" מ${fmtDate(log.startedAt)} יימחק. אי אפשר לבטל.`,
+              confirmLabel: 'מחק אימון',
+              danger: true,
+            });
+            if (!ok) return;
             await deleteSession(log.id);
             go('/history');
           }}
@@ -255,10 +272,10 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
             </Toggle>
           ) : undefined
         }
-        onPick={(x) => replaceWith(templateFrom(x))}
+        onPick={(x) => void replaceWith(templateFrom(x))}
         onCustom={(name) => {
           const old = replaceIdx != null ? log.exercises[replaceIdx] : undefined;
-          replaceWith(customTemplate(newId(), name, old && { sets: old.sets.length, muscle: old.plan.muscle }));
+          void replaceWith(customTemplate(newId(), name, old && { sets: old.sets.length, muscle: old.plan.muscle }));
         }}
         onClose={() => setReplaceIdx(null)}
       />
@@ -278,7 +295,14 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
             go(`/history/${done.id}`);
           }}
           onDiscard={async () => {
-            if (!confirm('לבטל את האימון בלי לשמור? כל מה שנרשם בו יימחק.')) return;
+            const ok = await confirm({
+              title: 'לבטל את האימון בלי לשמור?',
+              body: 'כל מה שנרשם באימון הזה יימחק.',
+              confirmLabel: 'בטל אימון',
+              cancelLabel: 'חזרה',
+              danger: true,
+            });
+            if (!ok) return;
             await deleteSession(log.id);
             timer.stop();
             setFinishOpen(false);
