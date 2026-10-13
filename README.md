@@ -68,7 +68,7 @@ A new device opens on a welcome screen, then up to 15 multiple-choice questions 
 
 The program is built on the device by a rule-based builder (`src/logic/generator.ts`). No AI service, no internet, no cost, and the same answers always give the same program:
 
-1. **Weekly structure** from the number of days: 2–3 full-body days, 4 upper/lower days, 5 adds a day picked by emphasis.
+1. **Weekly structure** from the number of days, with **one complete leg day a week** by default: 4–5 days are one leg day plus upper days (the fifth is shoulders and arms); 2–3 days put the legs into one full-body session (a squat for 4 sets plus a hinge) and the rest are upper. Two leg days only with a legs or glutes emphasis or a strength goal, never more than two.
 2. **Each session is a list of movement slots** (horizontal press, row, squat, hinge, lateral raise…) ranked by importance.
 3. **Each slot gets the best-scoring exercise** from the library (`src/data/exerciseLibrary.ts` + `exerciseMeta.ts`): it must fit the equipment; exercises that load a painful joint are left out or avoided; technical lifts are held back from beginners; age, preference and variety across the week also count.
 4. **Sets, reps and rest** come from goal and experience. Heavy 4–6 rep work is only used on lifts that can really be loaded, and never on an exercise that stresses a painful joint.
