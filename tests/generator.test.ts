@@ -35,7 +35,7 @@ describe('exercise metadata', () => {
 describe('every combination of answers gives a sound program', () => {
   const goals = ['muscle', 'strength', 'fatloss', 'general'] as const;
   const exps = ['none', 'lt6m', '6m2y', 'gt2y'] as const;
-  const daysList = [2, 3, 4, 5] as const;
+  const daysList = [2, 3, 4, 5, 6] as const;
   const minutesList = [30, 45, 60, 75] as const;
   const gears: Gear[][] = [FULL_GYM, ['db', 'bench'], []];
   const limitsList: Answers['limits'][] = [[], ['lowBack', 'knees'], ['shoulders', 'elbows']];
@@ -82,8 +82,8 @@ describe('every combination of answers gives a sound program', () => {
                   }
                   checked++;
                 }
-    expect(checked).toBe(4 * 4 * 4 * 4 * 3 * 3 * 3);
-  });
+    expect(checked).toBe(4 * 4 * 5 * 4 * 3 * 3 * 3);
+  }, 60_000);
 });
 
 describe('choices that should show up in the program', () => {
@@ -126,11 +126,12 @@ describe('choices that should show up in the program', () => {
 
   const legDays = (g: ReturnType<typeof gen>) => strength(g).filter((t) => !t.bonus && t.exercises.some((e) => e.muscle === 'legs'));
 
-  it('one leg day a week by default, whatever the number of days; chest and back still twice', () => {
+  it('one leg day a week by default for 2–5 days, whatever the goal (strength too); chest and back still twice', () => {
     for (const days of [2, 3, 4, 5] as const)
-      for (const goal of ['muscle', 'fatloss', 'general'] as const) {
-        const g = gen({ days, goal });
-        expect(legDays(g), JSON.stringify({ days, goal })).toHaveLength(1);
+      for (const goal of ['muscle', 'strength', 'fatloss', 'general'] as const)
+        for (const gear of [FULL_GYM, ['db', 'bench'], []] as Gear[][]) {
+        const g = gen({ days, goal, gear });
+        expect(legDays(g), JSON.stringify({ days, goal, gear })).toHaveLength(1);
         if (days >= 3) {
           const trains = (m: string) => strength(g).filter((t) => t.exercises.some((e) => e.muscle === m)).length;
           expect(trains('chest')).toBeGreaterThanOrEqual(2);
@@ -139,14 +140,33 @@ describe('choices that should show up in the program', () => {
       }
   });
 
-  it('two leg days with a legs or glutes emphasis, or a strength goal', () => {
-    for (const days of [4, 5] as const) {
+  it('two leg days only with a legs or glutes emphasis, or with 6 days a week', () => {
+    for (const days of [4, 5, 6] as const) {
       expect(legDays(gen({ days, emphasis: ['legs'] }))).toHaveLength(2);
       expect(legDays(gen({ days, emphasis: ['glutes'] }))).toHaveLength(2);
-      expect(legDays(gen({ days, goal: 'strength' }))).toHaveLength(2);
+    }
+    for (const goal of ['muscle', 'strength', 'fatloss', 'general'] as const) {
+      const g = gen({ days: 6, goal });
+      expect(legDays(g)).toHaveLength(2);
+      expect(g.program.sessions.filter((t) => t.kind === 'strength' && !t.bonus).map((t) => t.name)).toEqual([
+        'עליון א׳',
+        'תחתון א׳',
+        'עליון ב׳',
+        'עליון ג׳',
+        'תחתון ב׳',
+        'כתפיים וידיים',
+      ]);
     }
     // Full-body weeks with a leg emphasis train legs every session.
     expect(legDays(gen({ days: 3, emphasis: ['legs'] }))).toHaveLength(3);
+  });
+
+  it('calves are trained every week once there is an hour (one or two leg days)', () => {
+    for (const days of [4, 5, 6] as const)
+      for (const emphasis of [[], ['legs']] as Answers['emphasis'][]) {
+        const w = weeklySetsOf(gen({ days, minutes: 60, emphasis }).program);
+        expect(w.calves, JSON.stringify({ days, emphasis, w })).toBeGreaterThanOrEqual(2);
+      }
   });
 
   it('with 2–3 days, the one leg session has a squat for 4 sets and a hinge', () => {
@@ -179,7 +199,7 @@ describe('choices that should show up in the program', () => {
 
   it('stays balanced: chest and back close, arms trained, legs not overloaded', () => {
     for (const minutes of [45, 60, 75] as const)
-      for (const days of [3, 4, 5] as const)
+      for (const days of [3, 4, 5, 6] as const)
         for (const emphasis of [[], ['chest'], ['back'], ['arms']] as Answers['emphasis'][]) {
           const w = weeklySetsOf(gen({ minutes, days, emphasis }).program);
           const balanced = weeklySetsOf(gen({ minutes, days }).program);
@@ -195,8 +215,9 @@ describe('choices that should show up in the program', () => {
           }
           // Short full-body sessions are just the big lifts; split programs with an hour or more get direct arm work.
           if (days >= 4 && minutes >= 60) expect(w.arms, label).toBeGreaterThanOrEqual(minutes >= 75 ? 6 : 4);
-          // One leg day: no part of the leg gets more than a chest-sized weekly volume.
-          for (const g of ['quads', 'posterior', 'calves'] as const) expect(w[g], label).toBeLessThanOrEqual(12);
+          // One leg day: no part of the leg gets more than a chest-sized weekly volume (two leg days: 18).
+          const legCap = days === 6 ? 18 : 12;
+          for (const g of ['quads', 'posterior', 'calves'] as const) expect(w[g], label).toBeLessThanOrEqual(legCap);
         }
   });
 

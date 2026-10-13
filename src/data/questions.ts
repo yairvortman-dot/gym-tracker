@@ -90,6 +90,7 @@ export const questions: Question[] = [
       { value: '3', label: '3 ימים' },
       { value: '4', label: '4 ימים' },
       { value: '5', label: '5 ימים' },
+      { value: '6', label: '6 ימים' },
     ],
   },
   {

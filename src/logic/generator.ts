@@ -22,7 +22,7 @@ export interface Answers {
   /** Only asked when the person has trained before. */
   recent?: Recent;
   age: AgeBand;
-  days: 2 | 3 | 4 | 5;
+  days: 2 | 3 | 4 | 5 | 6;
   minutes: 30 | 45 | 60 | 75;
   gear: Gear[];
   /** Only asked when the person has both machines/cables and free weights. */
@@ -118,7 +118,8 @@ const DAYS: Record<string, DayBlueprint> = {
     key: 'loB',
     name: 'תחתון ב׳',
     subtitle: 'דגש ירך אחורית וישבן',
-    slots: [s('hinge', 1), s('squat', 2), s('glute', 2), s('ham_curl', 2), s('lunge', 3), s('calves', 3)],
+    // Calves are secondary here so that a two-leg-day week always trains them at least once.
+    slots: [s('hinge', 1), s('squat', 2), s('glute', 2), s('calves', 2), s('ham_curl', 3), s('lunge', 3)],
     fillers: [],
   },
   lower: {
@@ -462,43 +463,47 @@ export function generateProgram(a: Answers, today: Date = new Date()): Generated
     if (a.emphasis.some((e) => e === 'chest' || e === 'back')) return 'upC';
     return gear.size > 0 ? 'arms' : 'upC';
   };
-  // One complete leg day a week by default. Two only for a legs/glutes emphasis or a strength goal
-  // (squats and hinges improve faster practised twice a week), or when there's no equipment for an arms day.
+  // One complete leg day a week by default. Two only with a legs or glutes emphasis, or with
+  // 6 days a week (room for two). Never more than two.
   const legEmphasis = a.emphasis.some((e) => e === 'legs' || e === 'glutes');
-  const twoLegDays = legEmphasis || a.goal === 'strength' || (a.days === 5 && gear.size === 0);
-  const split: string[] = twoLegDays
-    ? a.days === 2
-      ? ['fbA', 'fbB']
-      : a.days === 3
-        ? ['fbA', 'fbB', 'fbC']
-        : a.days === 4
-          ? ['upA', 'loA', 'upB', 'loB']
-          : ['upA', 'loA', 'upB', 'loB', fifthDay()]
-    : a.days === 2
-      ? ['fbL', 'upB']
-      : a.days === 3
-        ? ['upA', 'fbL', 'upB']
-        : a.days === 4
-          ? ['upA', 'lower', 'upB', 'upC']
-          : ['upA', 'lower', 'upB', 'upC', 'arms'];
+  const twoLegDays = legEmphasis || a.days === 6;
+  const split: string[] =
+    a.days === 6
+      ? ['upA', 'loA', 'upB', 'upC', 'loB', 'arms']
+      : twoLegDays
+        ? a.days === 2
+          ? ['fbA', 'fbB']
+          : a.days === 3
+            ? ['fbA', 'fbB', 'fbC']
+            : a.days === 4
+              ? ['upA', 'loA', 'upB', 'loB']
+              : ['upA', 'loA', 'upB', 'loB', fifthDay()]
+        : a.days === 2
+          ? ['fbL', 'upB']
+          : a.days === 3
+            ? ['upA', 'fbL', 'upB']
+            : a.days === 4
+              ? ['upA', 'lower', 'upB', 'upC']
+              : ['upA', 'lower', 'upB', 'upC', 'arms'];
 
   // Upper days are lettered in the order they appear (a single one is just "עליון").
   const letters = ['א׳', 'ב׳', 'ג׳'];
   const uppers = split.filter((k) => k.startsWith('up'));
   const nameOf = (key: string) => (key.startsWith('up') ? (uppers.length === 1 ? 'עליון' : `עליון ${letters[uppers.indexOf(key)]}`) : DAYS[key].name);
 
-  if (twoLegDays) {
-    const why = legEmphasis ? 'בגלל הדגש על רגליים או ישבן' : a.goal === 'strength' ? 'כי במטרת כוח מתרגלים סקוואט והרמות פעמיים בשבוע' : 'כי בלי ציוד אין מספיק תרגילים ליום ידיים';
+  if (a.days === 6) {
+    reasons.push('6 ימים בשבוע: יש מקום לשני ימי רגליים, שלושה ימי עליון ויום כתפיים וידיים.');
+  } else if (twoLegDays) {
     reasons.push(
       a.days <= 3
-        ? `${a.days} ימים בשבוע: אימוני גוף מלא, והרגליים עובדות בכל אימון ${why}.`
-        : `${a.days} ימים בשבוע: שני ימי רגליים ${why}, והשאר עליון${a.days === 5 ? ` ועוד יום ${DAYS[split[4]].name}` : ''}.`,
+        ? `${a.days} ימים בשבוע: אימוני גוף מלא, והרגליים עובדות בכל אימון בגלל הדגש על רגליים או ישבן.`
+        : `${a.days} ימים בשבוע: שני ימי רגליים בגלל הדגש על רגליים או ישבן, והשאר עליון${a.days === 5 ? ` ועוד יום ${DAYS[split[4]].name}` : ''}.`,
     );
   } else {
     reasons.push(
       a.days <= 3
         ? `${a.days} ימים בשבוע: יום אחד של גוף מלא עם הרגליים (סקוואט ל-4 סטים והרמה רומנית, שעובדים כמעט על כל הרגל), והשאר עליון.`
-        : `${a.days} ימים בשבוע: יום רגליים אחד ומלא, והשאר עליון${a.days === 5 ? ', כולל יום כתפיים וידיים' : ''}. שני ימי רגליים רק בדגש רגליים או ישבן.`,
+        : `${a.days} ימים בשבוע: יום רגליים אחד ומלא, והשאר עליון${a.days === 5 ? ', כולל יום כתפיים וידיים' : ''}. שני ימי רגליים רק בדגש רגליים או ישבן, או ב-6 ימים בשבוע.`,
     );
   }
 
