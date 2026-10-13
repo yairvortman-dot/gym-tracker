@@ -1,6 +1,6 @@
-import type { ExerciseLog, SessionLog, SetLog } from '../types';
-import { defaultProgram } from './defaultProgram';
-import { planOf } from '../logic/sets';
+import type { ExerciseLog, SessionLog, SetLog } from '../../src/types';
+import { defaultProgram } from '../../src/data/defaultProgram';
+import { planOf } from '../../src/logic/sets';
 
 const upperA = defaultProgram.sessions.find((t) => t.id === 'upper-a')!;
 

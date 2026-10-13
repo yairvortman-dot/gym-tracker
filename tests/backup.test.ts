@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db, ensureSeeded, getMeta, saveProgram } from '../src/db';
 import { buildBackup, buildCsv, importBackup, parseBackup } from '../src/lib/backup';
-import { seedSession } from '../src/data/seedSession';
+import { seedSession } from './fixtures/seedSession';
 import type { Program } from '../src/types';
 
 beforeEach(async () => {
@@ -11,8 +11,11 @@ beforeEach(async () => {
 });
 
 describe('first run', () => {
-  it('seeds the program, settings and the paper session exactly once', async () => {
+  it('seeds the program and settings exactly once and starts with an empty history', async () => {
     await ensureSeeded();
+    expect(await db.sessions.count()).toBe(0);
+    // Opening the app again never wipes or re-adds anything.
+    await db.sessions.put(seedSession());
     await ensureSeeded();
     expect(await db.sessions.count()).toBe(1);
     const program = await getMeta<Program>('program');
@@ -23,6 +26,7 @@ describe('first run', () => {
 describe('backup', () => {
   it('round-trips through JSON and replaces what is on the device', async () => {
     await ensureSeeded();
+    await db.sessions.put(seedSession());
     const program = (await getMeta<Program>('program'))!;
     await saveProgram({ ...program, sessions: program.sessions.slice(0, 2) });
     const text = JSON.stringify(await buildBackup());

@@ -2,7 +2,6 @@ import Dexie, { type Table } from 'dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Program, SessionLog, Settings } from './types';
 import { defaultProgram, defaultSettings } from './data/defaultProgram';
-import { seedSession } from './data/seedSession';
 
 interface Meta {
   key: string;
@@ -26,7 +25,7 @@ export async function getMeta<T>(key: string): Promise<T | undefined> {
 
 export const setMeta = (key: string, value: unknown) => db.meta.put({ key, value });
 
-/** First run: load the program, default settings and the paper session. */
+/** First run: load the default program and settings. History starts empty. */
 export async function ensureSeeded() {
   await db.transaction('rw', db.sessions, db.meta, async () => {
     if (await db.meta.get('seeded')) return;
@@ -35,7 +34,6 @@ export async function ensureSeeded() {
       { key: 'settings', value: defaultSettings },
       { key: 'seeded', value: true },
     ]);
-    await db.sessions.put(seedSession());
   });
 }
 

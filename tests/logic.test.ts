@@ -6,7 +6,7 @@ import { weeklySets, weeklyTargets } from '../src/logic/weekly';
 import { twoWorseInARow } from '../src/logic/trend';
 import { doneSets, planOf, totalReps } from '../src/logic/sets';
 import { defaultProgram, defaultSettings } from '../src/data/defaultProgram';
-import { seedSession } from '../src/data/seedSession';
+import { seedSession } from './fixtures/seedSession';
 import type { ExerciseLog, SessionLog, SetLog } from '../src/types';
 
 const upperA = defaultProgram.sessions.find((t) => t.id === 'upper-a')!;

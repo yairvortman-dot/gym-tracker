@@ -82,7 +82,7 @@ The target uses the last time you did the exercise. Skipped sets never count as 
 - **Never an increase** during the calibration weeks or on a yellow or red day.
 - **Reps in reserve to aim for:** 1 normally, 2 during calibration, 3 on yellow or red days.
 - **Weight steps** are set per equipment type in Settings. Defaults: dumbbells 2 kg; cable, machine, barbell and added weight 2.5 kg.
-- **Seeded targets:** the first session (copied from the paper log) carries your hand-written targets for the next עליון א׳. Each one applies once, until that exercise is logged again.
+- **One-time targets:** a session can carry hand-set targets for the next time an exercise is done. Each applies once, until that exercise is logged again.
 
 ### Calibration
 
@@ -119,11 +119,11 @@ A session counts as "worse" when more exercises went down than up compared with 
 
 ```
 src/
-  data/            default program, settings, seeded first session
+  data/            default program and settings (a new device starts with empty history)
   logic/           pure rules: progression, day state & rotation, weekly sets, trend, session create/finish
   screens/         Today, Start (readiness check), Session (live + edit), History, Progress, Settings, ProgramEditor
   components/      ExerciseCard, RestTimer, LineChart, small UI controls
   lib/             backup (JSON/CSV), alerts (beep), wake lock, hash router, formatting
   db.ts            Dexie (IndexedDB) tables and live-query hooks
-tests/             Vitest unit tests
+tests/             Vitest unit tests (fixtures/ holds a sample session)
 ```
