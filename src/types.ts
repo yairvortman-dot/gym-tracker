@@ -42,8 +42,11 @@ export interface Program {
 
 export interface Settings {
   kgStep: Record<Equipment, number>;
-  /** ISO date (yyyy-mm-dd). The first 14 days from this date are calibration. */
+  /** ISO date (yyyy-mm-dd). The first `calibrationDays` days from this date are calibration. */
   programStart: string;
+  calibrationDays: number;
+  /** Show the "10 דקות בטן" checkbox when finishing a strength session. */
+  absFinisher: boolean;
   sound: boolean;
 }
 

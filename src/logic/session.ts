@@ -24,7 +24,7 @@ export function createSession(args: {
 }): SessionLog {
   const { tpl, settings, sessions, readiness, dayState, dayStateAuto } = args;
   const now = args.now ?? Date.now();
-  const calibration = calibrationWeek(settings.programStart, now) != null;
+  const calibration = calibrationWeek(settings.programStart, now, settings.calibrationDays) != null;
 
   const exercises: ExerciseLog[] = planForDay(tpl, dayState).map(({ index, sets, optional }) => {
     const ex = buildExerciseLog(tpl.exercises[index], sets, { settings, sessions, now, calibration, dayState });

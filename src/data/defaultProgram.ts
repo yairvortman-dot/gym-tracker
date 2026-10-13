@@ -99,5 +99,7 @@ export const defaultProgram: Program = {
 export const defaultSettings: Settings = {
   kgStep: { dumbbell: 2, cable: 2.5, machine: 2.5, barbell: 2.5, bodyweight: 2.5 },
   programStart: '2026-10-09',
+  calibrationDays: 14,
+  absFinisher: true,
   sound: true,
 };

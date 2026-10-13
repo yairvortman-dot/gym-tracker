@@ -223,7 +223,7 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
               סיום אימון
             </button>
           ) : (
-            <FinishFields log={log} onChange={update} inline />
+            <FinishFields log={log} onChange={update} inline showAbs={settings.absFinisher || log.absDone} />
           )}
         </>
       )}
@@ -265,6 +265,7 @@ export function SessionScreen({ id, mode }: { id: string; mode: Mode }) {
 
       {mode === 'live' && (
         <FinishSheet
+          showAbs={settings.absFinisher}
           open={finishOpen}
           log={log}
           onClose={() => setFinishOpen(false)}
@@ -327,7 +328,18 @@ function RunBody({ log, onChange, mode, onFinish }: { log: SessionLog; onChange:
   );
 }
 
-function FinishFields({ log, onChange, inline }: { log: SessionLog; onChange: (s: SessionLog) => void; inline?: boolean }) {
+function FinishFields({
+  log,
+  onChange,
+  inline,
+  showAbs = true,
+}: {
+  log: SessionLog;
+  onChange: (s: SessionLog) => void;
+  inline?: boolean;
+  /** Off when the person's program has no abs finisher. */
+  showAbs?: boolean;
+}) {
   const performed = log.exercises.filter((e) => visible(e) && !e.skipped);
   return (
     <div className={inline ? 'finish-fields card-plain' : 'finish-fields'}>
@@ -351,9 +363,11 @@ function FinishFields({ log, onChange, inline }: { log: SessionLog; onChange: (s
         />
       ) : (
         <>
-          <Toggle big checked={log.absDone} onChange={(v) => onChange({ ...log, absDone: v })}>
-            10 דקות בטן
-          </Toggle>
+          {showAbs && (
+            <Toggle big checked={log.absDone} onChange={(v) => onChange({ ...log, absDone: v })}>
+              10 דקות בטן
+            </Toggle>
+          )}
           <div className="field">
             <span className="field-label">איזה תרגיל הרגיש הכי חזק בשריר?</span>
             <div className="chip-list">
@@ -386,6 +400,7 @@ function FinishSheet(props: {
   onClose: () => void;
   onSave: (draft: SessionLog) => void;
   onDiscard: () => void;
+  showAbs: boolean;
 }) {
   const [draft, setDraft] = useState(props.log);
   useEffect(() => {
@@ -403,7 +418,7 @@ function FinishSheet(props: {
           <Num>{pending}</Num> סטים לא סומנו. הם יישמרו כ"לא עשיתי".
         </p>
       )}
-      <FinishFields log={draft} onChange={setDraft} />
+      <FinishFields log={draft} onChange={setDraft} showAbs={props.showAbs} />
       <div className="sheet-actions">
         <button type="button" className="btn btn-primary btn-block" onClick={() => props.onSave(draft)}>
           שמור וסיים

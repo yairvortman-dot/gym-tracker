@@ -74,11 +74,11 @@ export function startOfDay(ts: number): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
-/** Calibration week (1 or 2), or null once the first 14 days from the program start are over. */
-export function calibrationWeek(programStart: string, ts: number): 1 | 2 | null {
+/** Calibration week (1, 2, ...), or null once the calibration days from the program start are over. */
+export function calibrationWeek(programStart: string, ts: number, calibrationDays = 14): number | null {
   const days = Math.round((startOfDay(ts) - parseIsoDate(programStart)) / DAY);
-  if (days < 0 || days >= 14) return null;
-  return days < 7 ? 1 : 2;
+  if (days < 0 || days >= calibrationDays) return null;
+  return Math.floor(days / 7) + 1;
 }
 
 /** Weeks start on Sunday. */

@@ -31,7 +31,7 @@ export function Today() {
     );
   }
 
-  const calWeek = calibrationWeek(settings.programStart, Date.now());
+  const calWeek = calibrationWeek(settings.programStart, Date.now(), settings.calibrationDays);
   const worse = twoWorseInARow(sessions);
   const last = finished(sessions).sort(byStartDesc)[0];
   const isSuggested = tpl.id === suggestedId;
@@ -59,7 +59,7 @@ export function Today() {
 
       {calWeek && tpl.kind === 'strength' && (
         <div className="banner banner-info">
-          שבוע כיול <Num>{calWeek}</Num> מתוך <Num>2</Num>: עצור 2 חזרות לפני כשל. אין העלאות משקל כפויות.
+          שבוע כיול <Num>{calWeek}</Num> מתוך <Num>{Math.ceil(settings.calibrationDays / 7)}</Num>: עצור 2 חזרות לפני כשל. אין העלאות משקל כפויות.
         </div>
       )}
       {worse && <div className="banner banner-yellow">שני אימונים ברצף יצאו חלשים מהקודמים. בדוק קודם שינה ואוכל.</div>}
