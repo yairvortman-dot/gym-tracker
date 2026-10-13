@@ -2,7 +2,7 @@ import type { MuscleGroup, Program, SessionLog } from '../types';
 import { doneSets } from './sets';
 import { addDays } from './day';
 
-export const muscleOrder: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulders', 'arms'];
+export const muscleOrder: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core'];
 
 export const muscleLabel: Record<MuscleGroup, string> = {
   chest: 'חזה',
@@ -10,11 +10,12 @@ export const muscleLabel: Record<MuscleGroup, string> = {
   legs: 'רגליים',
   shoulders: 'כתפיים',
   arms: 'ידיים',
+  core: 'בטן',
   other: 'אחר',
 };
 
 type Counts = Record<MuscleGroup, number>;
-const zero = (): Counts => ({ chest: 0, back: 0, legs: 0, shoulders: 0, arms: 0, other: 0 });
+const zero = (): Counts => ({ chest: 0, back: 0, legs: 0, shoulders: 0, arms: 0, core: 0, other: 0 });
 
 /** Done sets per muscle group in the week starting at `start` (a Sunday). */
 export function weeklySets(sessions: SessionLog[], start: number): Counts {

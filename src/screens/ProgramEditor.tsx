@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import type { Equipment, ExerciseTemplate, MuscleGroup, SessionKind, SessionTemplate, WeightMode } from '../types';
 import { saveProgram, useProgram, useSessions } from '../db';
+import { ExercisePicker } from '../components/ExercisePicker';
+import type { LibraryExercise } from '../data/exerciseLibrary';
+import { templateFrom } from '../logic/library';
 import { Icon, Num, Segmented, Stepper, Toggle } from '../components/ui';
 import { newId } from '../logic/session';
 import { muscleLabel } from '../logic/weekly';
@@ -12,6 +15,8 @@ export function ProgramEditor({ tplId }: { tplId: string }) {
   const program = useProgram();
   const sessions = useSessions();
   const [open, setOpen] = useState<number | null>(null);
+  // null = closed, 'add' = new exercise, a number = replace the exercise at that index.
+  const [picker, setPicker] = useState<null | 'add' | number>(null);
   if (!program || !sessions) return <div className="screen" />;
 
   const tpl = program.sessions.find((t) => t.id === tplId);
@@ -51,6 +56,50 @@ export function ProgramEditor({ tplId }: { tplId: string }) {
     ];
     const match = others.find((o) => o.name.trim() === name && o.id !== ex.id);
     if (match && !hasHistory(ex.id)) setEx(i, { ...ex, id: match.id });
+  };
+
+  /** Reuse the id of an exercise with the same name elsewhere, so history and "last time" carry over. */
+  const existingId = (name: string): string | undefined => {
+    const n = name.trim();
+    return (
+      program.sessions.flatMap((t) => t.exercises).find((e) => e.name.trim() === n)?.id ??
+      sessions.flatMap((s) => s.exercises).find((e) => e.name.trim() === n)?.exId
+    );
+  };
+
+  const place = (ex: ExerciseTemplate) => {
+    if (typeof picker === 'number') {
+      // Replacing keeps the number of sets the person already chose.
+      setEx(picker, { ...ex, sets: tpl.exercises[picker].sets });
+    } else {
+      save({ ...tpl, exercises: [...tpl.exercises, ex] });
+    }
+    setPicker(null);
+  };
+
+  const pickLibrary = (x: LibraryExercise) => {
+    const t = templateFrom(x);
+    place({ ...t, id: existingId(t.name) ?? t.id });
+    setOpen(typeof picker === 'number' ? picker : null);
+  };
+
+  const pickCustom = (name: string) => {
+    const base = typeof picker === 'number' ? tpl.exercises[picker] : tpl.exercises[tpl.exercises.length - 1];
+    place({
+      id: existingId(name) ?? newId(),
+      name,
+      sets: base?.sets ?? 3,
+      repMin: 8,
+      repMax: 12,
+      restMinSec: 90,
+      restMaxSec: 90,
+      unilateral: false,
+      weightMode: 'perHand',
+      equipment: 'dumbbell',
+      muscle: base?.muscle ?? 'chest',
+    });
+    // A custom exercise opens so the person can set its muscle, equipment and reps.
+    setOpen(typeof picker === 'number' ? picker : tpl.exercises.length);
   };
 
   return (
@@ -131,37 +180,39 @@ export function ProgramEditor({ tplId }: { tplId: string }) {
                     </span>
                   </button>
                 </div>
-                {open === i && <ExerciseFields ex={ex} onChange={(next) => setEx(i, next)} onNameDone={(next) => linkByName(i, next)} onDelete={() => {
-                  if (!confirm(`למחוק את "${ex.name}" מהאימון? ההיסטוריה שלו נשארת.`)) return;
-                  save({ ...tpl, exercises: tpl.exercises.filter((_, k) => k !== i) });
-                  setOpen(null);
-                }} />}
+                {open === i && (
+                  <ExerciseFields
+                    ex={ex}
+                    onChange={(next) => setEx(i, next)}
+                    onNameDone={(next) => linkByName(i, next)}
+                    onReplace={() => setPicker(i)}
+                    onDelete={() => {
+                      if (!confirm(`למחוק את "${ex.name}" מהאימון? ההיסטוריה שלו נשארת.`)) return;
+                      save({ ...tpl, exercises: tpl.exercises.filter((_, k) => k !== i) });
+                      setOpen(null);
+                    }}
+                  />
+                )}
               </li>
             ))}
           </ol>
           <button
             type="button"
             className="btn btn-outline btn-block"
-            onClick={() => {
-              const ex: ExerciseTemplate = {
-                id: newId(),
-                name: '',
-                sets: 3,
-                repMin: 8,
-                repMax: 12,
-                restMinSec: 90,
-                restMaxSec: 90,
-                unilateral: false,
-                weightMode: 'perHand',
-                equipment: 'dumbbell',
-                muscle: 'chest',
-              };
-              save({ ...tpl, exercises: [...tpl.exercises, ex] });
-              setOpen(tpl.exercises.length);
-            }}
+            onClick={() => setPicker('add')}
           >
             <Icon name="plus" size={18} /> הוסף תרגיל
           </button>
+          <ExercisePicker
+            open={picker !== null}
+            title={typeof picker === 'number' ? `החלפת ${tpl.exercises[picker]?.name ?? 'תרגיל'}` : `הוספת תרגיל ל${tpl.name}`}
+            session={tpl.exercises}
+            programExercises={program.sessions.flatMap((t) => t.exercises)}
+            replacing={typeof picker === 'number' ? tpl.exercises[picker] : undefined}
+            onPick={pickLibrary}
+            onCustom={pickCustom}
+            onClose={() => setPicker(null)}
+          />
         </section>
       )}
 
@@ -185,6 +236,7 @@ function ExerciseFields(props: {
   ex: ExerciseTemplate;
   onChange: (ex: ExerciseTemplate) => void;
   onNameDone: (ex: ExerciseTemplate) => void;
+  onReplace: () => void;
   onDelete: () => void;
 }) {
   const { ex, onChange } = props;
@@ -263,9 +315,14 @@ function ExerciseFields(props: {
         <span className="field-label">הערת ביצוע (לא חובה)</span>
         <input className="text-input" value={ex.cue ?? ''} onChange={(e) => set({ cue: e.target.value || undefined })} />
       </label>
-      <button type="button" className="btn btn-danger" onClick={props.onDelete}>
-        <Icon name="trash" size={18} /> מחק תרגיל
-      </button>
+      <div className="row-buttons">
+        <button type="button" className="btn btn-outline" onClick={props.onReplace}>
+          החלף תרגיל
+        </button>
+        <button type="button" className="btn btn-danger" onClick={props.onDelete}>
+          <Icon name="trash" size={18} /> מחק תרגיל
+        </button>
+      </div>
     </div>
   );
 }

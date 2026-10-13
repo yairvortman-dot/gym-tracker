@@ -1,4 +1,4 @@
-export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'other';
+export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'other';
 export type Equipment = 'dumbbell' | 'cable' | 'machine' | 'barbell' | 'bodyweight';
 /** How the logged weight should be read. `added` = extra weight on top of bodyweight (0 = bodyweight only). */
 export type WeightMode = 'perHand' | 'perSide' | 'total' | 'added';

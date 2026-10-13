@@ -1474,3 +1474,84 @@ select.text-input {
   align-self: center;
   margin-top: 6px;
 }
+
+/* ---------- exercise picker ---------- */
+
+.pick-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pick-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.pick-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pick-muscle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.pick-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pick-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: start;
+}
+
+.pick-row:not(:disabled):active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pick-name {
+  font-weight: 600;
+}
+
+.pick-meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.pick-taken {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.pick-custom {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.pick-custom .field {
+  flex: 1;
+}
